@@ -50,6 +50,7 @@ services:
       context: ..
       dockerfile: Dockerfile
     restart: unless-stopped
+    dns: ${HOST_DNS}
     depends_on:
       - opensearch
       - redis

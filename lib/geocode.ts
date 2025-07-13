@@ -26,8 +26,8 @@ const requestAddressToCoordinates = async (
     return JSON.parse(cached);
   }
   const url = new URL("https://maps.googleapis.com/maps/api/geocode/json");
-  url.searchParams.set("country", "Australia");
-  url.searchParams.set("minConfidence", "country");
+  url.searchParams.set("region", "au");
+  url.searchParams.set("components", "country:AU");
   url.searchParams.set("limit", "1");
   url.searchParams.set("address", address);
   url.searchParams.set("key", Deno.env.get("GOOGLE_API_KEY") || "");

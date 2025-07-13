@@ -8,7 +8,7 @@
     "build": "deno run -A dev.ts build",
     "preview": "deno run -A main.ts",
     "update": "deno run -A -r https://fresh.deno.dev/update .",
-    "import": "deno run --allow-ffi --allow-read=data --allow-read=node_modules --allow-env --allow-sys --allow-net infra/scripts/upload_data.ts"
+    "import": "deno run --env-file --allow-ffi --allow-read=data --allow-read=node_modules --allow-env --allow-sys --allow-net infra/scripts/upload_data.ts"
   },
   "lint": {
     "rules": {
