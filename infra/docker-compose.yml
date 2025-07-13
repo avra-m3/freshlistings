@@ -1,0 +1,17 @@
+version: '3'
+services:
+  opensearch:
+    image: opensearchproject/opensearch:2.11.1
+    ports:
+      - "9200:9200"
+      - "9600:9600"
+    environment:
+      - "discovery.type=single-node"
+      - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=Secretive123#"
+      - "OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g"
+      - "DISABLE_INSTALL_DEMO_CONFIG=true"
+      - "DISABLE_SECURITY_PLUGIN=true"
+  redis:
+    image: redis:latest
+    ports:
+      - "6379:6379"

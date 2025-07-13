@@ -1,0 +1,47 @@
+{
+  "lock": false,
+  "tasks": {
+    "check": "deno fmt --check && deno lint && deno check **/*.ts && deno check **/*.tsx",
+    "cli": "echo \"import '\\$fresh/src/dev/cli.ts'\" | deno run --unstable -A -",
+    "manifest": "deno task cli manifest $(pwd)",
+    "start": "deno run --env-file -A --watch=static/,routes/ dev.ts",
+    "build": "deno run -A dev.ts build",
+    "preview": "deno run -A main.ts",
+    "update": "deno run -A -r https://fresh.deno.dev/update .",
+    "import": "deno run --allow-ffi --allow-read=data --allow-read=node_modules --allow-env --allow-sys --allow-net infra/scripts/upload_data.ts"
+  },
+  "lint": {
+    "rules": {
+      "tags": [
+        "fresh",
+        "recommended"
+      ]
+    }
+  },
+  "exclude": [
+    "**/_fresh/*"
+  ],
+  "imports": {
+    "$fresh/": "https://deno.land/x/fresh@1.7.3/",
+    "$std/": "https://deno.land/std@0.216.0/",
+    "@langchain/community": "npm:@langchain/community@^0.3.48",
+    "@langchain/core": "npm:@langchain/core@^0.3.62",
+    "@langchain/google-genai": "npm:@langchain/google-genai@^0.2.14",
+    "@langchain/ollama": "npm:@langchain/ollama@^0.2.3",
+    "ioredis": "npm:ioredis@^5.6.1",
+    "preact": "https://esm.sh/preact@10.22.0",
+    "preact/": "https://esm.sh/preact@10.22.0/",
+    "@preact/signals": "https://esm.sh/*@preact/signals@1.2.2",
+    "@preact/signals-core": "https://esm.sh/*@preact/signals-core@1.5.1",
+    "tailwindcss": "npm:tailwindcss@3.4.1",
+    "tailwindcss/": "npm:/tailwindcss@3.4.1/",
+    "tailwindcss/plugin": "npm:/tailwindcss@3.4.1/plugin.js",
+    "@opensearch-project/opensearch": "npm:@opensearch-project/opensearch@2.5.0",
+    "zod": "npm:zod@^4.0.5"
+  },
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact"
+  },
+  "nodeModulesDir": "auto"
+}
