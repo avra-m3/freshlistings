@@ -60,9 +60,7 @@ To enable semantic search capabilities, you need to register and deploy a machin
           "model_id": "<model_id>",
           "field_map": {
               "name": "name_embedding",
-              "description": "description_embedding",
-              "neighborhood_overview": "neighborhood_overview_embedding",
-              "amenities_text": "amenities_text_embedding"
+              "description": "description_embedding"
             }
           }
         }

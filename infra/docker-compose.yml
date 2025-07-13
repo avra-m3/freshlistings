@@ -1,17 +1,78 @@
-version: '3'
+version: '3.8'
+
 services:
+  ollama:
+    image: ollama/ollama:rocm
+    container_name: ollama
+    volumes:
+      - ollama:/root/.ollama
+    devices:
+      - /dev/kfd
+      - /dev/dri
+    dns: ${HOST_DNS}
+    restart: unless-stopped
+    networks:
+      - web
+      - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web"
+      - "traefik.http.routers.oll.rule=Host(`oll.${INTERNAL_DOMAIN}`)"
+      - "traefik.http.routers.oll.tls=true"
+      - "traefik.http.services.oll.loadbalancer.server.port=11434"
   opensearch:
-    image: opensearchproject/opensearch:2.11.1
+    image: opensearchproject/opensearch:latest
+    container_name: opensearch
+    environment:
+      - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_ADMIN_PASSWORD}"
+      - discovery.type=single-node
+      - "DISABLE_SECURITY_PLUGIN=true"
+      - "plugins.ml_commons.only_run_on_ml_node=false"
+      - "OPENSEARCH_JAVA_OPTS=-Xms5g -Xmx5g"
     ports:
       - "9200:9200"
       - "9600:9600"
-    environment:
-      - "discovery.type=single-node"
-      - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=Secretive123#"
-      - "OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g"
-      - "DISABLE_INSTALL_DEMO_CONFIG=true"
-      - "DISABLE_SECURITY_PLUGIN=true"
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+    restart: unless-stopped
+    dns: ${HOST_DNS}
+    networks:
+      - internal
   redis:
     image: redis:latest
+    restart: unless-stopped
     ports:
       - "6379:6379"
+    networks:
+      - internal
+  web:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - opensearch
+      - redis
+    environment:
+      OPENSEARCH_URL: "http://opensearch:9200"
+      OLLAMA_URL: "http://ollama:11434"
+      REDIS_URL: "redis://redis:6379"
+    env_file:
+      - ../.env
+    networks:
+      - web
+      - internal
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web"
+      - "traefik.http.routers.freshlistings.rule=Host(`freshlistings.avra.me`)"
+      - "traefik.http.routers.freshlistings.tls=true"
+      - "traefik.http.services.freshlistings.loadbalancer.server.port=8000"
+networks:
+  web:
+    external: true
+  internal:
+    driver: bridge
+volumes:
+  ollama:
+  opensearch-data:
