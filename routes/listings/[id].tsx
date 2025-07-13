@@ -1,6 +1,6 @@
-import {Handlers, PageProps} from "$fresh/server.ts";
-import {getListingById} from "../../lib/opensearch.ts";
-import {Listing} from "../../lib/types.ts";
+import { Handlers, PageProps } from "$fresh/server.ts";
+import { getListingById } from "../../lib/opensearch.ts";
+import { Listing } from "../../lib/types.ts";
 import ListingCard from "../../components/ListingCard.tsx";
 
 export const handler: Handlers<Listing> = {

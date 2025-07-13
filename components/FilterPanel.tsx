@@ -83,7 +83,7 @@ const Filter = (
             {value.freeText}
           </span>
         );
-      }else {
+      } else {
         return (
           <span className="bg-white rounded-xl shadow-xl px-2 py-1 text-lg">
             {IconMap[label]} {value.freeText}

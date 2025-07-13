@@ -2,7 +2,7 @@ import { Client } from "npm:@opensearch-project/opensearch";
 import { InferredFilters, Listing, ListingHighlight } from "./types.ts";
 
 const EMBEDDING_MODEL_ID = Deno.env.get("OPENSEARCH_MODEL_ID");
-const HIGHLIGHT_MODEL_ID = Deno.env.get("OPENSEARCH_HL_MODEL_ID");
+// const HIGHLIGHT_MODEL_ID = Deno.env.get("OPENSEARCH_HL_MODEL_ID");
 
 export const client = new Client({
   node: Deno.env.get("OPENSEARCH_URL") || "http://localhost:9200",
@@ -21,7 +21,11 @@ type ListingHit = {
   _source: Omit<Listing, "id">;
 };
 
-const generateNeuralQuery = (field: string, queryText: string, weight = 1) => ({
+const generateNeuralQuery = (
+  field: string,
+  queryText: string,
+  _weight = 1,
+) => ({
   // function_score: {
   //   weight,
   //   query: {
@@ -119,9 +123,9 @@ export const searchListings = async (
       bool: {
         ...(sematicPriorities.length
           ? {
-              should: sematicPriorities,
-              minimum_should_match: 1,
-            }
+            should: sematicPriorities,
+            minimum_should_match: 1,
+          }
           : {}),
         ...(filters.length ? { filter: filters } : {}),
       },

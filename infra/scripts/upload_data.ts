@@ -71,7 +71,7 @@ for (let i = 0; i < csvData.length; i += batchSize) {
   console.log(`Processing and indexing batch ${i / batchSize + 1}...`);
 
   const docs = await Promise.all(
-    batch.map(async (row) => {
+    batch.map((row) => {
       const amenities = row.amenities
         ? JSON.parse(row.amenities.replace(/""/g, '"'))
         : [];
@@ -127,7 +127,9 @@ for (let i = 0; i < csvData.length; i += batchSize) {
   if (response.body.errors) {
     console.error(
       "Error indexing batch:",
-      response.body.items.filter((item: any) => item.index.error),
+      response.body.items.filter((item: { index: { error: Error } }) =>
+        item.index.error
+      ),
     );
   } else {
     console.log(`Batch of ${docs.length} documents indexed successfully.`);

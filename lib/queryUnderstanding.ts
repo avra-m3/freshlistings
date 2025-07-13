@@ -11,8 +11,6 @@ const model = new ChatGoogleGenerativeAI({
   cache,
 });
 
-
-
 const structuredLLM = model.withStructuredOutput(QueryOutput, {
   includeRaw: true,
 });
@@ -30,6 +28,6 @@ export const breakdownQuery = async (
       content: query,
     },
   ], {});
-  console.log(r.raw)
+  console.log(r.raw);
   return r.parsed;
 };
