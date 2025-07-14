@@ -12,6 +12,11 @@ const models = {
     temperature: 0,
     cache,
   }),
+  "gemini-2.5-flash-temp-1": new ChatGoogleGenerativeAI({
+    model: "gemini-2.5-flash-lite-preview-06-17",
+    temperature: 1,
+    cache,
+  }),
   "ollama-minstral-8b": new ChatOllama({
     model: "nchapman/ministral-8b-instruct-2410:8b",
     baseUrl: Deno.env.get("OLLAMA_URL") || "http://localhost:11434",

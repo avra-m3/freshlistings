@@ -21,7 +21,7 @@ type Data = {
 const params = z.object({
   p: z.coerce.number().default(0),
   q: z.string().max(1000).optional(),
-  m: z.enum(["ollama-minstral-8b", "gemini-2.5-flash"]).default('gemini-2.5-flash'),
+  m: z.enum(["ollama-minstral-8b", "gemini-2.5-flash", "gemini-2.5-flash-temp-1"]).default('gemini-2.5-flash'),
 });
 
 export const handler: Handlers<Data> = {

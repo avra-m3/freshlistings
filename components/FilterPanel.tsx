@@ -6,6 +6,8 @@ import IconMapPinFilled from "https://deno.land/x/tabler_icons_tsx@0.0.7/tsx/map
 import IconBrandCitymapper from "https://deno.land/x/tabler_icons_tsx@0.0.7/tsx/brand-citymapper.tsx";
 import IconSparkles from "https://deno.land/x/tabler_icons_tsx@0.0.7/tsx/sparkles.tsx";
 import IconTarget from "https://deno.land/x/tabler_icons_tsx@0.0.7/tsx/target.tsx";
+import IconCurrencyDollar from "https://deno.land/x/tabler_icons_tsx@0.0.7/tsx/currency-dollar.tsx"
+
 interface FilterPanelProps {
   filters: InferredFilters;
 }
@@ -32,6 +34,7 @@ const IconMap: Partial<Record<keyof InferredFilters, JSX.Element>> = {
   numBathrooms: <IconBathFilled class="w-6 h-5 inline" />,
   location: <IconMapPinFilled class="w-6 h-5 inline" />,
   keywords: <IconSparkles class="w-6 h-5 inline" />,
+  price: <IconCurrencyDollar class="w-6 h-5 inline" />,
 };
 
 const minMaxToString = (value: MinMaxValue): string => {
