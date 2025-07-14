@@ -1,10 +1,10 @@
-import {Handlers, PageProps} from "$fresh/server.ts";
-import ListingSearch from "../islands/ListingSearch.tsx";
-import {searchListings} from "../lib/opensearch.ts";
-import {InferredFilters, Listing, ListingHighlight} from "../lib/types.ts";
-import {breakdownQuery} from "../lib/queryUnderstanding.ts";
-import {locationToCoordinates} from "../lib/geocode.ts";
-import {z} from "npm:zod@4.0.5";
+import { Handlers, PageProps } from "$fresh/server.ts";
+import ListingSearch from "../../islands/ListingSearch.tsx";
+import { searchListings } from "../../lib/opensearch.ts";
+import { InferredFilters, Listing, ListingHighlight } from "../../lib/types.ts";
+import { locationToCoordinates } from "../../lib/geocode.ts";
+import { z } from "npm:zod@4.0.5";
+import {alternateBreakdownQuery} from "../../lib/doubleShotUnderstanding.ts";
 
 type Data = {
   listings: (Listing & ListingHighlight)[];
@@ -40,8 +40,8 @@ export const handler: Handlers<Data> = {
     const p = parsedParams.data.p;
     const m = parsedParams.data.m;
     if (q) {
-      const understoodQuery = await breakdownQuery(q, m);
-      console.log(understoodQuery);
+      const understoodQuery = await alternateBreakdownQuery(q, m);
+      console.log("v2" ,understoodQuery);
       let realCoords: { lat: number; lng: number; name: string } | undefined;
       if (understoodQuery.location?.place) {
         realCoords = await locationToCoordinates(
@@ -71,7 +71,6 @@ export const handler: Handlers<Data> = {
 };
 
 export default function Home({ data }: PageProps<Data>) {
-  // console.log(data.listings);
   return (
     <div className="mx-auto">
       <div className="bg-[#a104c3] w-full flex flex-col items-center justify-center p-6 pb-60 -mb-60">

@@ -71,10 +71,10 @@ for (let i = 0; i < csvData.length; i += batchSize) {
   console.log(`Processing and indexing batch ${i / batchSize + 1}...`);
 
   const docs = batch.map((row) => {
-    const amenities = row.amenities
-      ? JSON.parse(row.amenities.replace(/""/g, '"'))
-      : [];
-    const description = `${row.name}
+      const amenities = row.amenities
+        ? JSON.parse(row.amenities.replace(/""/g, '"'))
+        : [];
+      const description = `${row.name}
         ${row.description || ""}
         Neighborhood Overview:
         ${row.neighborhood_overview || ""}
@@ -82,34 +82,34 @@ for (let i = 0; i < csvData.length; i += batchSize) {
         ${row.amenities || ""}
         `;
 
-    const doc: Partial<Listing> = {
-      id: row.id,
-      listing_url: row.listing_url,
-      name: row.name,
-      description,
-      ...(row.neighborhood_overview
-        ? { neighborhood_overview: row.neighborhood_overview }
-        : { neighborhood_overview: "" }),
-      ...(row.amenities
-        ? { amenities_text: row.amenities }
-        : { amenities_text: "" }),
-      picture_url: row.picture_url,
-      location: {
-        lat: parseFloat(row.latitude),
-        lon: parseFloat(row.longitude),
-      },
-      property_type: row.property_type,
-      room_type: row.room_type,
-      accommodates: row.accommodates ? parseInt(row.accommodates, 10) : 0,
-      bathrooms: row.bathrooms ? parseInt(row.bathrooms, 10) : 0,
-      bedrooms: row.bedrooms ? parseInt(row.bedrooms, 10) : 0,
-      beds: row.beds ? parseInt(row.beds, 10) : 0,
-      amenities: amenities,
-      price: row.price ? parseFloat(row.price.replace(/[$,]/g, "")) : 0,
-    };
+      const doc: Partial<Listing> = {
+        id: row.id,
+        listing_url: row.listing_url,
+        name: row.name,
+        description,
+        ...(row.neighborhood_overview
+          ? { neighborhood_overview: row.neighborhood_overview }
+          : { neighborhood_overview: "" }),
+        ...(row.amenities
+          ? { amenities_text: row.amenities }
+          : { amenities_text: "" }),
+        picture_url: row.picture_url,
+        location: {
+          lat: parseFloat(row.latitude),
+          lon: parseFloat(row.longitude),
+        },
+        property_type: row.property_type,
+        room_type: row.room_type,
+        accommodates: row.accommodates ? parseInt(row.accommodates, 10) : 0,
+        bathrooms: row.bathrooms ? parseInt(row.bathrooms, 10) : 0,
+        bedrooms: row.bedrooms ? parseInt(row.bedrooms, 10) : 0,
+        beds: row.beds ? parseInt(row.beds, 10) : 0,
+        amenities: amenities,
+        price: row.price ? parseFloat(row.price.replace(/[$,]/g, "")) : 0,
+      };
 
-    return doc;
-  });
+      return doc;
+    })
 
   const body = docs.flatMap((doc) => [
     { index: { _index: "listings", _id: doc.id } },

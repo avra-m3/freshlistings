@@ -30,7 +30,7 @@ export default function ListingSearch(props: ListingSearchProps) {
           value={query.value}
           onInput={(e) => query.value = (e.target as HTMLInputElement).value}
         />
-        <input type="hidden" name="m" value={props.model} />
+        {props.model && props.model !== "gemini-2.5-flash" && <input type="hidden" name="m" value={props.model} />}
         <button
           type="submit"
           class="px-4 py-2 bg-yellow-300 text-black rounded-tr-xl"

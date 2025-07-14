@@ -1,8 +1,9 @@
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import { InferredFilters, QueryOutput } from "./types.ts";
-import { RedisCache } from "@langchain/community/caches/ioredis";
-import { redis_raw } from "./cache.ts";
-import { ChatOllama } from "npm:@langchain/ollama@0.2.3";
+import {ChatGoogleGenerativeAI} from "@langchain/google-genai";
+import {InferredFilters} from "./types.ts";
+import {RedisCache} from "@langchain/community/caches/ioredis";
+import {redis_raw} from "./cache.ts";
+import {ChatOllama} from "npm:@langchain/ollama@0.2.3";
+import {QueryOutput,} from "./schemas.ts";
 
 const cache = new RedisCache(redis_raw);
 
@@ -28,7 +29,7 @@ const models = {
 
 export const breakdownQuery = async (
   query: string,
-  model: keyof typeof models = 'gemini-2.5-flash',
+  model: keyof typeof models = "gemini-2.5-flash",
 ): Promise<InferredFilters> => {
   const structuredLLM = models[model].withStructuredOutput(QueryOutput, {
     includeRaw: true,

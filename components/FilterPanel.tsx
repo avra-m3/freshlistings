@@ -72,27 +72,27 @@ const Filter = (
       </>
     );
   }
-  if (typeof value === "object" && value !== null) {
+  if (typeof value === "object") {
     if ("min" in value || "max" in value) {
       return (
         <span className="bg-white rounded-xl shadow-xl px-2 py-1 text-lg">
           {IconMap[label]} {minMaxToString(value)}
         </span>
       );
-    } else if ("freeText" in value) {
+    } else if ("place" in value) {
       if (value.distance?.value) {
         return (
           <span className="bg-white rounded-xl shadow-xl px-2 py-1 text-lg">
             {IconMap[label]}
             {value.distance.value} {value.distance.unit}{" "}
             <IconBrandCitymapper class="w-6 h-5 inline mx-1" />
-            {value.freeText}
+            {value.place}
           </span>
         );
       } else {
         return (
           <span className="bg-white rounded-xl shadow-xl px-2 py-1 text-lg">
-            {IconMap[label]} {value.freeText}
+            {IconMap[label]} {value.place}
           </span>
         );
       }
