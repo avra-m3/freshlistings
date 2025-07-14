@@ -59,6 +59,9 @@ const Filter = (
     value: InferredFilters[keyof InferredFilters] | string;
   },
 ) => {
+    if (!value || (typeof value === "object" && Object.keys(value).length === 0)) {
+        return null;
+    }
   if (Array.isArray(value)) {
     return (
       <>

@@ -47,20 +47,19 @@ export const QueryOutput = z.object({
       "The intention of the user when searching for listings, such as buying, renting, investing, etc.",
     ),
   numBeds: MinMaxField.optional().describe(
-    "The number of beds the user is looking for in a listing.",
+    "The number of beds or bedrooms the user is looking for in a listing.",
   ),
   numBathrooms: MinMaxField.optional().describe(
     "The number of bathrooms, toilets or showers the user is looking for in a listing, assume a minimum of 1 if no exact count.",
   ),
-  // priceMin: z.number().optional().describe('The minimum price the user is willing to pay for a listing, leave empty if user does not provide a price value.'),
-  // priceMax: z.number().optional().describe('The maximum price the user is willing to pay for a listing, leave empty if user does not provide a price value.'),
+  price: MinMaxField.optional().describe('The price ($) range the user is looking for in a listing.'),
   location: z
     .object({
       freeText: z
         .string()
         .optional()
         .describe(
-          "The free text location the user is looking for listings in, such as a city, neighborhood, or nearby amenity.",
+          "The free text place the user is looking for listings in or around, such as a city, neighborhood, nearby amenity or place ie: 'MCG', 'Richmond', 'the beach'.",
         ),
       distance: z
         .object({
@@ -79,13 +78,13 @@ export const QueryOutput = z.object({
         .describe(
           "The distance from the freeText location the user is interested in.",
         ),
-    })
+    }).describe('A place or area defined by the user.')
     .optional(),
   keywords: z
     .string()
     .array()
     .describe(
-      'Any features a user is looking for in the property that are not captured by the other fields, such as "pool", "wifi", "mountain views", "city living" etc.',
+      'Features a user is looking for in the property that are **NOT** captured by the other fields, such as "pool", "wifi", "mountain views" etc.',
     ),
 });
 

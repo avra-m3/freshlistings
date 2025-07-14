@@ -4,24 +4,43 @@ import { searchListings } from "../lib/opensearch.ts";
 import { InferredFilters, Listing, ListingHighlight } from "../lib/types.ts";
 import { breakdownQuery } from "../lib/queryUnderstanding.ts";
 import { locationToCoordinates } from "../lib/geocode.ts";
+import { z } from "npm:zod@4.0.5";
 
 type Data = {
   listings: (Listing & ListingHighlight)[];
   queryTime: number;
   query?: string;
   page?: number;
+  model?: string;
   count?: number;
   understoodQuery?: InferredFilters;
   realLocation?: string;
+
 };
+
+const params = z.object({
+  p: z.coerce.number().default(0),
+  q: z.string().max(1000).optional(),
+  m: z.enum(["ollama-minstral-8b", "gemini-2.5-flash"]).default('gemini-2.5-flash'),
+});
 
 export const handler: Handlers<Data> = {
   async GET(req, ctx) {
     const url = new URL(req.url);
-    const q = url.searchParams.get("q");
-    const p = parseInt(url.searchParams.get("p") || "0");
+    const rawParams = Object.fromEntries(url.searchParams.entries());
+    const parsedParams = params.safeParse(rawParams);
+    if (!parsedParams.success) {
+      return ctx.render({
+        listings: [],
+        queryTime: 0,
+        query: "Invalid query parameters",
+      });
+    }
+    const q = parsedParams.data.q;
+    const p = parsedParams.data.p;
+    const m = parsedParams.data.m;
     if (q) {
-      const understoodQuery = await breakdownQuery(q);
+      const understoodQuery = await breakdownQuery(q, m);
       console.log(understoodQuery);
       let realCoords: { lat: number; lng: number; name: string } | undefined;
       if (understoodQuery.location?.freeText) {
@@ -44,6 +63,7 @@ export const handler: Handlers<Data> = {
         count,
         understoodQuery,
         realLocation: realCoords?.name,
+        model: m,
       });
     }
     return ctx.render({ listings: [], queryTime: 0, query: "" });
@@ -77,6 +97,7 @@ export default function Home({ data }: PageProps<Data>) {
             page={data.page}
             understoodQuery={data.understoodQuery}
             realLocation={data.realLocation}
+            model={data.model}
           />
         </div>
       </div>
