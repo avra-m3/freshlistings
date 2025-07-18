@@ -28,7 +28,7 @@ services:
       - "traefik.http.routers.oll.tls=true"
       - "traefik.http.services.oll.loadbalancer.server.port=11434"
   opensearch:
-    image: opensearchproject/opensearch:latest
+    image: opensearchproject/opensearch:2.11.1
     container_name: opensearch
     environment:
       - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_ADMIN_PASSWORD}"
@@ -38,6 +38,8 @@ services:
       - "OPENSEARCH_JAVA_OPTS=-Xms2g -Xmx4g"
       - "bootstrap.memory_lock=true"
       - "cluster.routing.allocation.disk.threshold_enabled=false"
+      - "LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu:/usr/share/opensearch/lib"
+      - "plugins.security.disabled=true"
     ulimits:
       memlock:
         soft: -1
