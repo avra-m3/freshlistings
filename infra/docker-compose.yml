@@ -9,6 +9,13 @@ services:
     devices:
       - /dev/kfd
       - /dev/dri
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
     dns: ${HOST_DNS}
     restart: unless-stopped
     networks:
