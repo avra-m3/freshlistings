@@ -6,9 +6,9 @@ services:
     container_name: ollama
     volumes:
       - ollama:/root/.ollama
-    devices:
-      - /dev/kfd
-      - /dev/dri
+#    devices:
+#      - /dev/kfd
+#      - /dev/dri
     deploy:
       resources:
         reservations:
