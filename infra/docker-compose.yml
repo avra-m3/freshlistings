@@ -2,7 +2,7 @@ version: "3.8"
 
 services:
   ollama:
-    image: ollama/ollama:rocm
+    image: ollama/ollama:0.9.6
     container_name: ollama
     volumes:
       - ollama:/root/.ollama
