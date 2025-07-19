@@ -6,9 +6,9 @@ services:
     container_name: ollama
     volumes:
       - ollama:/root/.ollama
-#    devices:
-#      - /dev/kfd
-#      - /dev/dri
+    #    devices:
+    #      - /dev/kfd
+    #      - /dev/dri
     deploy:
       resources:
         reservations:
@@ -27,19 +27,68 @@ services:
       - "traefik.http.routers.oll.rule=Host(`oll.${INTERNAL_DOMAIN}`)"
       - "traefik.http.routers.oll.tls=true"
       - "traefik.http.services.oll.loadbalancer.server.port=11434"
-  opensearch:
-    image: opensearchproject/opensearch:2.11.1
-    container_name: opensearch
+  opensearch-node1:
+    image: opensearchproject/opensearch:latest
+    container_name: opensearch-node1
     environment:
-      - "OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_ADMIN_PASSWORD}"
-      - discovery.type=single-node
-      - "DISABLE_SECURITY_PLUGIN=true"
-      - "plugins.ml_commons.only_run_on_ml_node=false"
-      - "OPENSEARCH_JAVA_OPTS=-Xms2g -Xmx4g"
-      - "bootstrap.memory_lock=true"
-      - "cluster.routing.allocation.disk.threshold_enabled=false"
-      - "LD_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu:/lib/x86_64-linux-gnu:/usr/share/opensearch/lib"
-      - "plugins.security.disabled=true"
+      - cluster.name=opensearch-cluster # Name the cluster
+      - node.name=opensearch-node1
+      - discovery.seed_hosts=opensearch-node1,opensearch-ml1 # Nodes to look for when discovering the cluster
+      - cluster.initial_cluster_manager_nodes=opensearch-node1,opensearch-ml1 # Nodes eligible to serve as cluster manager
+      - bootstrap.memory_lock=true # Disable JVM heap memory swapping
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" # Set min and max JVM heap sizes to at least 50% of system RAM
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD}    # Sets the demo admin user password when using demo configuration, required for OpenSearch 2.12 and later
+    ulimits:
+      memlock:
+        soft: -1 # Set memlock to unlimited (no soft or hard limit)
+        hard: -1
+      nofile:
+        soft: 65536 # Maximum number of open files for the opensearch user - set to at least 65536
+        hard: 65536
+    volumes:
+      - opensearch-data1:/usr/share/opensearch/data
+    ports:
+      - "9200:9200"
+    restart: unless-stopped
+    dns: ${HOST_DNS}
+    networks:
+      - internal
+  opensearch-node2:
+    image: opensearchproject/opensearch:latest
+    container_name: opensearch-node2
+    environment:
+      - cluster.name=opensearch-cluster # Name the cluster
+      - node.name=opensearch-node2
+      - discovery.seed_hosts=opensearch-node1,opensearch-node2 # Nodes to look for when discovering the cluster
+      - cluster.initial_cluster_manager_nodes=opensearch-node1,opensearch-node2 # Nodes eligible to serve as cluster manager
+      - bootstrap.memory_lock=true # Disable JVM heap memory swapping
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" # Set min and max JVM heap sizes to at least 50% of system RAM
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD}    # Sets the demo admin user password when using demo configuration, required for OpenSearch 2.12 and later
+    ulimits:
+      memlock:
+        soft: -1 # Set memlock to unlimited (no soft or hard limit)
+        hard: -1
+      nofile:
+        soft: 65536 # Maximum number of open files for the opensearch user - set to at least 65536
+        hard: 65536
+    volumes:
+      - opensearch-data1:/usr/share/opensearch/data
+    restart: unless-stopped
+    dns: ${HOST_DNS}
+    networks:
+      - internal
+  opensearch-ml1:
+    image: opensearchproject/opensearch:latest
+    container_name: opensearch-ml1
+    environment:
+      - cluster.name=opensearch-cluster
+      - node.name=opensearch-ml1
+      - discovery.seed_hosts=opensearch-node1,opensearch-node2 # Nodes to look for when discovering the cluster
+      - cluster.initial_cluster_manager_nodes=opensearch-node1,opensearch-node2 # Nodes eligible to serve as cluster manager
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_INITIAL_ADMIN_PASSWORD}
+      - node.roles=ml
     ulimits:
       memlock:
         soft: -1
@@ -47,15 +96,35 @@ services:
       nofile:
         soft: 65536
         hard: 65536
-    ports:
-      - "9200:9200"
-      - "9600:9600"
+    restart: unless-stopped
     volumes:
-      - opensearch-data:/usr/share/opensearch/data
+      - opensearch-ml1:/usr/share/opensearch/data
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [ gpu ]
+    dns: ${HOST_DNS}
+    networks:
+      - internal
+  opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:latest
+    container_name: opensearch-dashboards
+    environment:
+      OPENSEARCH_HOSTS: '["https://opensearch-node1:9200","https://opensearch-ml1:9200"]' # Define the OpenSearch nodes that OpenSearch Dashboards will query
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=web"
+      - "traefik.http.routers.opendash.rule=Host(`opendash.${INTERNAL_DOMAIN}`)"
+      - "traefik.http.routers.opendash.tls=true"
+      - "traefik.http.services.opendash.loadbalancer.server.port=5601"
     restart: unless-stopped
     dns: ${HOST_DNS}
     networks:
       - internal
+      - web
   redis:
     image: redis:latest
     restart: unless-stopped
@@ -94,4 +163,6 @@ networks:
     driver: bridge
 volumes:
   ollama:
-  opensearch-data:
+  opensearch-data1:
+  opensearch-data2:
+  opensearch-ml1:
