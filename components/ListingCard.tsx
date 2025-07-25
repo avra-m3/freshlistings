@@ -15,7 +15,7 @@ export default function ListingCard(
     <div key={listing.id} class="rounded-xl shadow-lg bg-white">
       <a href={`/listings/${listing.id}`}>
         <img
-          src={listing.picture_url}
+          src={`${listing.picture_url}?im_w=480`}
           alt={listing.name}
           class="w-full h-48 object-cover mb-1 rounded-t-xl"
         />

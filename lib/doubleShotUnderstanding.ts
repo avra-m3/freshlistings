@@ -1,39 +1,19 @@
-import {ChatGoogleGenerativeAI} from "@langchain/google-genai";
 import {InferredFilters} from "./types.ts";
-import {RedisCache} from "@langchain/community/caches/ioredis";
-import {redis_raw} from "./cache.ts";
-import {ChatOllama} from "npm:@langchain/ollama@0.2.3";
 import {classifyPrompt, LocationField, MinMaxField,} from "./schemas.ts";
+import {AllowedModel, getStructuredModel, metaPrompt} from "./models.ts";
 
-const cache = new RedisCache(redis_raw);
-
-const models = {
-  "gemini-2.5-flash": new ChatGoogleGenerativeAI({
-    model: "gemini-2.5-flash-lite-preview-06-17",
-    temperature: 0,
-    cache,
-  }),
-  "ollama-minstral-8b": new ChatOllama({
-    model: "nchapman/ministral-8b-instruct-2410:8b",
-    baseUrl: Deno.env.get("OLLAMA_URL") || "http://localhost:11434",
-    temperature: 0,
-    maxRetries: 2,
-    cache,
-  }),
-};
 
 export const alternateBreakdownQuery = async (
   query: string,
-  model: keyof typeof models = "gemini-2.5-flash",
+  model: AllowedModel = "gemini-2.5-flash",
 ): Promise<InferredFilters> => {
-  const classify = models[model].withStructuredOutput(classifyPrompt);
-  const minMaxField = models[model].withStructuredOutput(MinMaxField);
-  const distanceField = models[model].withStructuredOutput(LocationField);
-
-  const r = await classify.invoke([
+  const classify =getStructuredModel(model, classifyPrompt);
+  const minMaxField = getStructuredModel(model, MinMaxField);
+  const distanceField =getStructuredModel(model, LocationField);
+  let {parsed, raw} = await classify.invoke([
     {
       role: "system",
-      content: "Break down this query into structured filters",
+      content: metaPrompt,
     },
     {
       role: "human",
@@ -41,14 +21,15 @@ export const alternateBreakdownQuery = async (
     },
   ]);
 
-  console.log("classifications", r.keyTerms);
-  const distanceTerm = r.keyTerms.find((v) => v.type === "location");
+  console.log("raw", raw.content)
+  console.log("classifications", parsed.keyTerms);
+  const distanceTerm = parsed.keyTerms.find((v) => v.type === "location");
 
   const results: InferredFilters = {
     intention: "buy",
-    keywords: r.keyTerms.filter((v) => v.type === "other").map((v) => v.term),
+    keywords: parsed.keyTerms.filter((v) => v.type === "other").map((v) => v.term),
     location: distanceTerm
-        && await distanceField.invoke([distanceTerm.descriptor, distanceTerm.term].filter(v => !!v).join(" "))
+        &&  (await distanceField.invoke([distanceTerm.descriptor, distanceTerm.term].filter(v => !!v).join(" "))).parsed
   };
 
   const mapTermToInferred: Record<
@@ -64,14 +45,13 @@ export const alternateBreakdownQuery = async (
     (["bedroom", "bathroom", "price"] as const).map(
       async (type) => {
         const key = mapTermToInferred[type];
-        const terms = r.keyTerms.filter((v) => v.type === type);
+        const terms = parsed.keyTerms.filter((v) => v.type === type);
         const prompt: string | undefined = terms.length ?
           terms.flatMap(term =>[term.descriptor, term.term])
               .filter(v => !!v).join(" ") : undefined;
         console.log(type, prompt)
         if (key && prompt) {
-          // @ts-ignore
-          results[key] = await minMaxField.invoke(`${type} range request: ${prompt}`);
+          results[key as 'numBeds' | 'numBathrooms' | 'price'] = (await minMaxField.invoke(`${type} range request: ${prompt}`)).parsed;
         }
       },
     ),

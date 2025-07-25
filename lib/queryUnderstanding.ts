@@ -1,49 +1,25 @@
-import {ChatGoogleGenerativeAI} from "@langchain/google-genai";
 import {InferredFilters} from "./types.ts";
-import {RedisCache} from "@langchain/community/caches/ioredis";
-import {redis_raw} from "./cache.ts";
-import {ChatOllama} from "npm:@langchain/ollama@0.2.3";
-import {QueryOutput,} from "./schemas.ts";
-
-const cache = new RedisCache(redis_raw);
-
-const models = {
-  "gemini-2.5-flash": new ChatGoogleGenerativeAI({
-    model: "gemini-2.5-flash-lite-preview-06-17",
-    temperature: 0,
-    cache,
-  }),
-  "gemini-2.5-flash-temp-1": new ChatGoogleGenerativeAI({
-    model: "gemini-2.5-flash-lite-preview-06-17",
-    temperature: 1,
-    cache,
-  }),
-  "ollama-minstral-8b": new ChatOllama({
-    model: "nchapman/ministral-8b-instruct-2410:8b",
-    baseUrl: Deno.env.get("OLLAMA_URL") || "http://localhost:11434",
-    temperature: 0,
-    maxRetries: 2,
-    cache,
-  }),
-};
+import {QueryOutput} from "./schemas.ts";
+import {AllowedModel, getStructuredModel} from "./models.ts";
 
 export const breakdownQuery = async (
   query: string,
-  model: keyof typeof models = "gemini-2.5-flash",
-): Promise<InferredFilters> => {
-  const structuredLLM = models[model].withStructuredOutput(QueryOutput, {
-    includeRaw: true,
-  });
+  model: AllowedModel = "gemini-2.5-flash",
+): Promise<InferredFilters | null> => {
+  const structuredLLM = getStructuredModel(model, QueryOutput);
   const r = await structuredLLM.invoke([
-    {
-      role: "system",
-      content: "I'm looking for",
-    },
+    // {
+    //   role: "system",
+    //   content: metaPrompt,
+    // },
     {
       role: "human",
       content: query,
     },
   ], {});
   console.log(r.raw);
+  if (!r.parsed) {
+    console.log("json", QueryOutput.safeParse(JSON.parse(r.raw.content as string)));
+  }
   return r.parsed;
 };

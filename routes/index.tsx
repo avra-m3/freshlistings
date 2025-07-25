@@ -1,10 +1,11 @@
 import {Handlers, PageProps} from "$fresh/server.ts";
-import ListingSearch from "../islands/ListingSearch.tsx";
+import ListingSearch from "../components/ListingSearch.tsx";
 import {searchListings} from "../lib/opensearch.ts";
 import {InferredFilters, Listing, ListingHighlight} from "../lib/types.ts";
 import {breakdownQuery} from "../lib/queryUnderstanding.ts";
 import {locationToCoordinates} from "../lib/geocode.ts";
 import {z} from "npm:zod@4.0.5";
+import {AllowedModelSchema} from "../lib/models.ts";
 
 type Data = {
   listings: (Listing & ListingHighlight)[];
@@ -21,7 +22,7 @@ type Data = {
 const params = z.object({
   p: z.coerce.number().default(0),
   q: z.string().max(1000).optional(),
-  m: z.enum(["ollama-minstral-8b", "gemini-2.5-flash", "gemini-2.5-flash-temp-1"]).default('gemini-2.5-flash'),
+  m: AllowedModelSchema.default("gemini-2.5-flash"),
 });
 
 export const handler: Handlers<Data> = {
@@ -41,7 +42,14 @@ export const handler: Handlers<Data> = {
     const m = parsedParams.data.m;
     if (q) {
       const understoodQuery = await breakdownQuery(q, m);
-      console.log(understoodQuery);
+      if(!understoodQuery) {
+        return ctx.render({
+          listings: [],
+          queryTime: 0,
+          query: q,
+        });
+      }
+      console.log("query", understoodQuery);
       let realCoords: { lat: number; lng: number; name: string } | undefined;
       if (understoodQuery.location?.place) {
         realCoords = await locationToCoordinates(
@@ -100,6 +108,21 @@ export default function Home({ data }: PageProps<Data>) {
             model={data.model}
           />
         </div>
+      </div>
+      <div className="mt-4 max-w-screen-lg mx-auto flex flex-col items-center justify-center">
+          <span aria-label="disclaimer" className="text-xs text-gray-500">
+            Data sourced from{" "}
+            <a
+                href="https://insideairbnb.com/get-the-data/#:~:text=match%20at%20L2231%20Sydney%2C%20New,South%20Wales%2C%20Australia"
+            >
+              inside Airbnb
+            </a>.
+            <br/>
+            This site is for demonstration purposes only. The data is not real-time
+            and will not reflect current listings or prices. This site is a tech
+            demo for the future of search and should not be used for actual
+            property searches or transactions.
+          </span>
       </div>
     </div>
   );

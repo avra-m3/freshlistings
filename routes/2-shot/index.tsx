@@ -1,10 +1,11 @@
 import { Handlers, PageProps } from "$fresh/server.ts";
-import ListingSearch from "../../islands/ListingSearch.tsx";
+import ListingSearch from "../../components/ListingSearch.tsx";
 import { searchListings } from "../../lib/opensearch.ts";
 import { InferredFilters, Listing, ListingHighlight } from "../../lib/types.ts";
 import { locationToCoordinates } from "../../lib/geocode.ts";
 import { z } from "npm:zod@4.0.5";
 import {alternateBreakdownQuery} from "../../lib/doubleShotUnderstanding.ts";
+import {AllowedModelSchema} from "../../lib/models.ts";
 
 type Data = {
   listings: (Listing & ListingHighlight)[];
@@ -21,7 +22,7 @@ type Data = {
 const params = z.object({
   p: z.coerce.number().default(0),
   q: z.string().max(1000).optional(),
-  m: z.enum(["ollama-minstral-8b", "gemini-2.5-flash", "gemini-2.5-flash-temp-1"]).default('gemini-2.5-flash'),
+  m: AllowedModelSchema.default("gemini-2.5-flash"),
 });
 
 export const handler: Handlers<Data> = {

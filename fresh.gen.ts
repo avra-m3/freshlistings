@@ -5,9 +5,14 @@
 import * as $_2_shot_index from "./routes/2-shot/index.tsx";
 import * as $_404 from "./routes/_404.tsx";
 import * as $_app from "./routes/_app.tsx";
+import * as $api_predict_index from "./routes/api/predict/index.tsx";
 import * as $index from "./routes/index.tsx";
 import * as $listings_id_ from "./routes/listings/[id].tsx";
-import * as $ListingSearch from "./islands/ListingSearch.tsx";
+import * as $map_index from "./routes/map/index.tsx";
+import * as $ListingSearchResults from "./islands/ListingSearchResults.tsx";
+import * as $MapOverlay from "./islands/MapOverlay.tsx";
+import * as $MapPanel from "./islands/MapPanel.tsx";
+import * as $SearchPanel from "./islands/SearchPanel.tsx";
 import type { Manifest } from "$fresh/server.ts";
 
 const manifest = {
@@ -15,11 +20,16 @@ const manifest = {
     "./routes/2-shot/index.tsx": $_2_shot_index,
     "./routes/_404.tsx": $_404,
     "./routes/_app.tsx": $_app,
+    "./routes/api/predict/index.tsx": $api_predict_index,
     "./routes/index.tsx": $index,
     "./routes/listings/[id].tsx": $listings_id_,
+    "./routes/map/index.tsx": $map_index,
   },
   islands: {
-    "./islands/ListingSearch.tsx": $ListingSearch,
+    "./islands/ListingSearchResults.tsx": $ListingSearchResults,
+    "./islands/MapOverlay.tsx": $MapOverlay,
+    "./islands/MapPanel.tsx": $MapPanel,
+    "./islands/SearchPanel.tsx": $SearchPanel,
   },
   baseUrl: import.meta.url,
 } satisfies Manifest;

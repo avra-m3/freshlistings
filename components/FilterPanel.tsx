@@ -6,13 +6,15 @@ import IconMapPinFilled from "https://deno.land/x/tabler_icons_tsx@0.0.7/tsx/map
 import IconBrandCitymapper from "https://deno.land/x/tabler_icons_tsx@0.0.7/tsx/brand-citymapper.tsx";
 import IconSparkles from "https://deno.land/x/tabler_icons_tsx@0.0.7/tsx/sparkles.tsx";
 import IconTarget from "https://deno.land/x/tabler_icons_tsx@0.0.7/tsx/target.tsx";
-import IconCurrencyDollar from "https://deno.land/x/tabler_icons_tsx@0.0.7/tsx/currency-dollar.tsx"
+import IconCurrencyDollar from "https://deno.land/x/tabler_icons_tsx@0.0.7/tsx/currency-dollar.tsx";
+import { Tooltip } from "./Tooltip.tsx";
 
 interface FilterPanelProps {
   filters: InferredFilters;
+  realLocation?: string;
 }
 
-export const FilterPanel = ({ filters }: FilterPanelProps) => {
+export const FilterPanel = ({ filters, realLocation }: FilterPanelProps) => {
   return (
     <div className="flex flex-wrap gap-2">
       <div className="mt-4 flex flex-wrap gap-2">
@@ -21,6 +23,9 @@ export const FilterPanel = ({ filters }: FilterPanelProps) => {
             key={key}
             label={key as keyof InferredFilters}
             value={value}
+            tooltip={(key === "location" && realLocation)
+              ? realLocation
+              : undefined}
           />
         ))}
       </div>
@@ -57,14 +62,17 @@ const minMaxToString = (value: MinMaxValue): string => {
 };
 
 const Filter = (
-  { label, value }: {
+  { label, value, tooltip }: {
     label: keyof InferredFilters;
     value: InferredFilters[keyof InferredFilters] | string;
+    tooltip?: string;
   },
 ) => {
-    if (!value || (typeof value === "object" && Object.keys(value).length === 0)) {
-        return null;
-    }
+  if (
+    !value || (typeof value === "object" && Object.keys(value).length === 0)
+  ) {
+    return null;
+  }
   if (Array.isArray(value)) {
     return (
       <>
@@ -75,32 +83,46 @@ const Filter = (
   if (typeof value === "object") {
     if ("min" in value || "max" in value) {
       return (
-        <span className="bg-white rounded-xl shadow-xl px-2 py-1 text-lg">
+        <button
+          type="button"
+          className="bg-white rounded-xl shadow-xl px-2 py-1 text-lg"
+        >
           {IconMap[label]} {minMaxToString(value)}
-        </span>
+        </button>
       );
     } else if ("place" in value) {
       if (value.distance?.value) {
         return (
-          <span className="bg-white rounded-xl shadow-xl px-2 py-1 text-lg">
-            {IconMap[label]}
-            {value.distance.value} {value.distance.unit}{" "}
-            <IconBrandCitymapper class="w-6 h-5 inline mx-1" />
-            {value.place}
-          </span>
+          <Tooltip content={tooltip} position={"bottom"}>
+            <button
+              type="button"
+              className="bg-white rounded-xl shadow-xl px-2 py-1 text-lg"
+            >
+              {IconMap[label]}
+              {value.distance.value} {value.distance.unit}{" "}
+              <IconBrandCitymapper class="w-6 h-5 inline mx-1" />
+              {value.place}
+            </button>
+          </Tooltip>
         );
       } else {
         return (
-          <span className="bg-white rounded-xl shadow-xl px-2 py-1 text-lg">
+          <button
+            type="button"
+            className="bg-white rounded-xl shadow-xl px-2 py-1 text-lg"
+          >
             {IconMap[label]} {value.place}
-          </span>
+          </button>
         );
       }
     }
   }
   return (
-    <span className="bg-white rounded-xl shadow-xl px-2 py-1 text-lg">
+    <button
+      type="button"
+      className="bg-white rounded-xl shadow-xl px-2 py-1 text-lg"
+    >
       {IconMap[label]} {value}
-    </span>
+    </button>
   );
 };

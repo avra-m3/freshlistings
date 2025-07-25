@@ -28,6 +28,8 @@
     "@langchain/core": "npm:@langchain/core@^0.3.62",
     "@langchain/google-genai": "npm:@langchain/google-genai@^0.2.14",
     "@langchain/ollama": "npm:@langchain/ollama@^0.2.3",
+    "@types/google.maps": "npm:@types/google.maps@^3.58.1",
+    "h3-js": "npm:h3-js@^4.2.1",
     "ioredis": "npm:ioredis@^5.6.1",
     "preact": "https://esm.sh/preact@10.22.0",
     "preact/": "https://esm.sh/preact@10.22.0/",
