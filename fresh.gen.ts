@@ -8,10 +8,13 @@ import * as $_app from "./routes/_app.tsx";
 import * as $api_predict_index from "./routes/api/predict/index.tsx";
 import * as $index from "./routes/index.tsx";
 import * as $listings_id_ from "./routes/listings/[id].tsx";
+import * as $map_cells_index from "./routes/map/cells/index.tsx";
 import * as $map_index from "./routes/map/index.tsx";
+import * as $map_signals from "./routes/map/signals.ts";
 import * as $ListingSearchResults from "./islands/ListingSearchResults.tsx";
 import * as $MapOverlay from "./islands/MapOverlay.tsx";
 import * as $MapPanel from "./islands/MapPanel.tsx";
+import * as $MapSearchPanel from "./islands/MapSearchPanel.tsx";
 import * as $SearchPanel from "./islands/SearchPanel.tsx";
 import type { Manifest } from "$fresh/server.ts";
 
@@ -23,12 +26,15 @@ const manifest = {
     "./routes/api/predict/index.tsx": $api_predict_index,
     "./routes/index.tsx": $index,
     "./routes/listings/[id].tsx": $listings_id_,
+    "./routes/map/cells/index.tsx": $map_cells_index,
     "./routes/map/index.tsx": $map_index,
+    "./routes/map/signals.ts": $map_signals,
   },
   islands: {
     "./islands/ListingSearchResults.tsx": $ListingSearchResults,
     "./islands/MapOverlay.tsx": $MapOverlay,
     "./islands/MapPanel.tsx": $MapPanel,
+    "./islands/MapSearchPanel.tsx": $MapSearchPanel,
     "./islands/SearchPanel.tsx": $SearchPanel,
   },
   baseUrl: import.meta.url,

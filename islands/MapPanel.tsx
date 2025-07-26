@@ -1,44 +1,106 @@
 /// <reference types="@types/google.maps" />
-import { Head } from "$fresh/runtime.ts";
+import { Head, IS_BROWSER } from "$fresh/runtime.ts";
 import { useEffect, useLayoutEffect } from "preact/hooks";
-import { useSignal } from "@preact/signals";
 import { createRef } from "preact";
-import { IS_BROWSER } from "$fresh/runtime.ts";
 import MapOverlay from "./MapOverlay.tsx";
+import {
+  googleLibrarySignal,
+  setGoogleMap,
+  useMapLibrary,
+} from "../routes/map/signals.ts";
 
 interface MapPanelProps {
   apiKey?: string;
+  position?: {
+    lat: number;
+    lng: number;
+  };
+  zoom?: number;
 }
+
+const mapStyles = [
+  {
+    "featureType": "poi",
+    "stylers": [
+      { "visibility": "off" },
+    ],
+  },
+  {
+    "featureType": "transit",
+    "stylers": [
+      { "visibility": "off" },
+    ],
+  },
+  {
+    "featureType": "water",
+    "stylers": [
+      { "color": "#91a4c8" },
+    ],
+  },
+  {
+    "featureType": "landscape",
+    "stylers": [
+      { "color": "#ffffff" },
+    ],
+  },
+];
+
 export default function MapPanel(props: MapPanelProps) {
   const mapRef = createRef<HTMLDivElement>();
-  const mapSignal = useSignal<google.maps.Map | null>(null);
-  const mapLibrarySignal = useSignal<google.maps.MapsLibrary | null>(null);
-  const markerLibrarySignal = useSignal<google.maps.MarkerLibrary | null>(null);
+
+  const mapLibrary = useMapLibrary();
+
   useEffect(() => {
     if (!IS_BROWSER) {
       return;
     }
-    console.log("MapPanel load event", google.maps.importLibrary);
-    Promise.all([google.maps.importLibrary("maps"), google.maps.importLibrary("marker")]).then(
-        ([mapLibrary, markerLibrary]) => {
-            console.log("Google Maps libraries loaded:", mapLibrary, markerLibrary);
-            mapLibrarySignal.value = mapLibrary as google.maps.MapsLibrary;
-            markerLibrarySignal.value = markerLibrary as google.maps.MarkerLibrary;
-        }
-    )
+    Promise.all([
+      google.maps.importLibrary("maps"),
+      google.maps.importLibrary("marker"),
+    ]).then(
+      ([mapLibrary, markerLibrary]) => {
+        console.log("Google Maps libraries loaded:", mapLibrary, markerLibrary);
+        googleLibrarySignal.value = {
+          maps: mapLibrary as google.maps.MapsLibrary,
+          marker: markerLibrary as google.maps.MarkerLibrary,
+        };
+      },
+    );
   }, []);
 
   useLayoutEffect(() => {
-    if (!mapLibrarySignal.value || !mapRef.current) {
+    if (!mapLibrary || !mapRef.current) {
       return;
     }
-    const map = new mapLibrarySignal.value.Map(mapRef.current, {
-      center: { lat: 37.7749, lng: -122.4194 }, // Default to San Francisco
-      zoom: 12,
+    const map = new mapLibrary.Map(mapRef.current, {
+      center: props.position, // Default to San Francisco
+      zoom: props.zoom,
       mapTypeId: "roadmap",
+      mapTypeControl: false,
+      fullscreenControl: false,
+      styles: mapStyles,
     });
-    mapSignal.value = map;
-  }, [mapLibrarySignal.value]);
+    setGoogleMap(map);
+
+    const updateUrl = () => {
+      const center = map.getCenter();
+      if (center) {
+        const lat = center.lat();
+        const lng = center.lng();
+        const zoom = map.getZoom();
+        const url = new URL(window.location.href);
+        url.searchParams.set("lat", lat.toString());
+        url.searchParams.set("lng", lng.toString());
+        if (zoom) {
+          url.searchParams.set("zoom", zoom.toString());
+        }
+        window.history.pushState({}, "", url.toString());
+      }
+    };
+
+    map.addListener("dragend", updateUrl);
+    map.addListener("zoom_changed", updateUrl);
+  }, [mapLibrary]);
 
   return (
     <div class="w-screen h-screen relative">
@@ -54,10 +116,7 @@ export default function MapPanel(props: MapPanelProps) {
           }}
         />
       </Head>
-      <MapOverlay
-        map={mapSignal.value}
-        mapsLibrary={mapLibrarySignal.value}
-      />
+      <MapOverlay />
       <div id="map" class="w-full h-full" ref={mapRef} />
     </div>
   );

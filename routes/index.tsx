@@ -1,6 +1,6 @@
 import {Handlers, PageProps} from "$fresh/server.ts";
 import ListingSearch from "../components/ListingSearch.tsx";
-import {searchListings} from "../lib/opensearch.ts";
+import {searchListings} from "../lib/opensearch/listings.ts";
 import {InferredFilters, Listing, ListingHighlight} from "../lib/types.ts";
 import {breakdownQuery} from "../lib/queryUnderstanding.ts";
 import {locationToCoordinates} from "../lib/geocode.ts";

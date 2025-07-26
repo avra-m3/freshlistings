@@ -1,5 +1,5 @@
 import { z } from "npm:zod@4.0.5";
-import {MinMaxField, QueryOutput} from "./schemas.ts";
+import { MinMaxField, QueryOutput } from "./schemas.ts";
 
 export interface ListingHighlight {
   highlight?: {
@@ -28,6 +28,17 @@ export interface Listing {
   amenities: string[];
   amenities_text: string;
   price: number;
+}
+
+export interface GeoIndexLocation {
+  location: {
+    lat: number;
+    lon: number;
+  };
+  index: string;
+  keyword: string;
+  type: "neighborhood" | "amenity" | "property";
+  at: string;
 }
 
 export type MinMaxValue = z.infer<typeof MinMaxField>;

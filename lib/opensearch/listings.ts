@@ -1,8 +1,8 @@
 import { Client } from "npm:@opensearch-project/opensearch";
-import { InferredFilters, Listing, ListingHighlight } from "./types.ts";
+import { InferredFilters, Listing, ListingHighlight } from "../types.ts";
 
 const OPENSEARCH_URL = Deno.env.get("OPENSEARCH_URL");
-const EMBEDDING_MODEL_ID = Deno.env.get("OPENSEARCH_MODEL_ID");
+export const EMBEDDING_MODEL_ID = Deno.env.get("OPENSEARCH_MODEL_ID");
 // const HIGHLIGHT_MODEL_ID = Deno.env.get("OPENSEARCH_HL_MODEL_ID");
 
 console.log("OPENSEARCH_URL", OPENSEARCH_URL);
@@ -29,9 +29,6 @@ const generateNeuralQuery = (
   queryText: string,
   _weight = 1,
 ) => ({
-  // function_score: {
-  //   weight,
-  //   query: {
   neural: {
     [`${field}_embedding`]: {
       query_text: queryText,
@@ -39,8 +36,6 @@ const generateNeuralQuery = (
       k: 10,
     },
   },
-  //   },
-  // },
 });
 
 export const searchListings = async (

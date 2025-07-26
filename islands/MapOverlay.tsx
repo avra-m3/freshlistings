@@ -1,139 +1,144 @@
 /// <reference types="@types/google.maps" />
-import {useEffect} from "preact/hooks";
-import {useSignal} from "@preact/signals";
-import {cellToBoundary, edgeLength, getHexagonEdgeLengthAvg, latLngToCell, polygonToCells, UNITS} from "h3-js";
+import { useEffect } from "preact/hooks";
+import { useSignal, useSignalEffect } from "@preact/signals";
+import { cellToBoundary, cellToLatLng } from "h3-js";
 import { IS_BROWSER } from "$fresh/runtime.ts";
+import { MapTile } from "../routes/map/cells/index.tsx";
+import {
+  useGoogleMap,
+  useMapCenter,
+  useMapLibrary,
+  useMapSearchKeywordSignal,
+  useZoomLevel
+} from "../routes/map/signals.ts";
 
-interface MapOverlayProps {
-  mapsLibrary: google.maps.MapsLibrary | null;
-  map: google.maps.Map | null;
-}
+export default function MapOverlay() {
+  const mapLibrary = useMapLibrary();
+  const map = useGoogleMap();
 
-const getH3Resolution = (zoomLevel: number) => {
-  // Map Google Maps zoom levels to H3 resolutions
-  // H3 resolution ranges from 0 (largest hexagons) to 15 (smallest)
-  if (zoomLevel <= 3) return 1;
-  if (zoomLevel <= 5) return 2;
-  if (zoomLevel <= 7) return 3;
-  if (zoomLevel <= 9) return 4;
-  if (zoomLevel <= 11) return 6;
-  if (zoomLevel <= 13) return 8;
-  if (zoomLevel <= 15) return 9;
-  if (zoomLevel <= 17) return 10;
-  return 8;
-};
-
-export default function MapOverlay({map, mapsLibrary}: MapOverlayProps) {
   const hexagons = useSignal<google.maps.Polygon[]>([]);
-  const currentZoomLevel = useSignal<number>(10);
-  const debounceTimeout = useSignal<number | null>(null);
 
-  // Clear existing hexagons from the map
+  const currentZoomLevel = useZoomLevel();
+  const currentCenter = useMapCenter();
+  const keyword = useMapSearchKeywordSignal();
+
+  const debounceTimeout = useSignal<number | null>(null);
+  const currentWindow = useSignal<google.maps.InfoWindow | null>(null);
+
   const clearHexagons = () => {
-    hexagons.value.forEach((polygon) => {
-      polygon.setMap(null);
-    });
+    const hexagonsBefore = [...hexagons.value];
     hexagons.value = [];
+    return () => {
+      hexagonsBefore.forEach((polygon) => {
+        polygon.setMap(null);
+      });
+    };
   };
 
-  // Generate and render H3 hexagons for the current map viewport
-  const renderHexagons = () => {
-    if (!map || !mapsLibrary || !IS_BROWSER) {
+  const drawTiles = (tiles: MapTile[]) => {
+    if (!mapLibrary || !IS_BROWSER) {
       return;
     }
-
-    clearHexagons();
-
-    const bounds = map.getBounds();
-    const zoom = map.getZoom();
-
-    if (!bounds || !zoom) return;
-
-    currentZoomLevel.value = zoom;
-    const h3Resolution = getH3Resolution(zoom);
-
-    const sizeAsRads = getHexagonEdgeLengthAvg(h3Resolution, UNITS.km)/6371
-    const sizeAsDeg = sizeAsRads * (180 / Math.PI);
-    const margin = sizeAsDeg*2
-
-    const topLeft = bounds.getNorthEast();
-    const bottomRight = bounds.getSouthWest();
-
-
-    const boundingPolygon = [
-        [topLeft.lat() + margin, topLeft.lng() + margin],
-        [topLeft.lat() + margin, bottomRight.lng() - margin],
-        [bottomRight.lat() - margin, bottomRight.lng() - margin],
-        [bottomRight.lat() - margin, topLeft.lng() + margin],
-    ]
-
-
-
-
-    const hexagonIndices = polygonToCells(boundingPolygon, h3Resolution);
     const newHexagons: google.maps.Polygon[] = [];
-
-    hexagonIndices.forEach((h3Index) => {
+    tiles.forEach((tile) => {
       try {
-
-        const boundary = cellToBoundary(h3Index, true);
-
+        const boundary = cellToBoundary(tile.h3Index, true);
         const paths = boundary.map(([lng, lat]) => ({ lat, lng }));
 
         // Create Google Maps polygon
-        const polygon = new google.maps.Polygon({
+        const polygon = new mapLibrary.Polygon({
           paths,
-          strokeColor: "#4285F4",
-          strokeOpacity: 0.8,
-          strokeWeight: 1,
-          fillColor: "#4285F4",
-          fillOpacity: 0.15,
+          // strokeColor: tile.strokeColor,
+          // strokeOpacity: 0.8,
+          strokeWeight: 0,
+          fillColor: tile.fillColour,
+          fillOpacity: tile.fillOpacity,
           map: map,
           clickable: true,
         });
 
         // Add click handler to show H3 index
         polygon.addListener("click", () => {
-          const infoWindow = new google.maps.InfoWindow({
+          if (currentWindow.value) {
+            currentWindow.value.close();
+          }
+          const center = cellToLatLng(tile.h3Index);
+          currentWindow.value = new mapLibrary.InfoWindow({
             content: `<div>
-                            <strong>H3 Index:</strong> ${h3Index}<br>
-                            <strong>Resolution:</strong> ${h3Resolution}
+                            <strong>H3 Index:</strong> ${tile.h3Index}<br>
+                            <strong>Data:</strong> ${tile.data}
                         </div>`,
-            position: { lat: boundary[0][1], lng: boundary[0][0] },
+            position: { lat: center[0], lng: center[1] },
           });
-          infoWindow.open(map);
+          currentWindow.value.open(map);
         });
 
         newHexagons.push(polygon);
       } catch (error) {
-        console.warn("Error creating hexagon for H3 index:", h3Index, error);
+        console.warn("Error creating hexagon for tile:", tile, error);
       }
     });
-
     hexagons.value = newHexagons;
+  };
+
+  // Generate and render H3 hexagons for the current map viewport
+  const renderHexagons = () => {
+    if (!map || !mapLibrary || !IS_BROWSER) {
+      return;
+    }
+
+    const afterRender = clearHexagons();
+
+    const bounds = map.getBounds();
+    const zoom = map.getZoom();
+
+    if (!bounds || !zoom) return;
+
+    // Get the cells from /map/cells endpoint
+    const topLeft = bounds.getNorthEast();
+    const bottomRight = bounds.getSouthWest();
+
+    const params = new URLSearchParams({
+      topLeft: `${topLeft.lat()},${topLeft.lng()}`,
+      bottomRight: `${bottomRight.lat()},${bottomRight.lng()}`,
+      zoom: zoom.toString(),
+      keywords: keyword
+    });
+
+    const url = `/map/cells?${params.toString()}`;
+    console.log("Fetching hexagons from:", url);
+
+    fetch(url)
+      .then((response) => response.json())
+      .then((data) => {
+        if (!data || !data.tiles || data.tiles.length === 0) {
+          console.warn("No hexagons found in response");
+          return;
+        }
+        console.log("Hexagons fetched:", data.tiles);
+        drawTiles(data.tiles);
+      })
+      .catch((error) => {
+        console.error("Error fetching hexagons:", error);
+      }).finally(() => {
+        afterRender();
+      });
   };
 
   // Set up map event listeners
   useEffect(() => {
-    if (!map || typeof window === "undefined") return;
-    console.log("MapOverlay: Initializing hexagon rendering");
+    if (!map || typeof window === "undefined" || !currentZoomLevel || !currentCenter) return;
 
-    // Initial render
-    renderHexagons();
-
-    // Re-render hexagons when map view changes
-    const zoomListener = (map.addListener as (typeof map)["addListener"])("zoom_changed", renderHexagons);
-    const boundsListener = (map.addListener as (typeof map)["addListener"])("bounds_changed", () => {
-      // Clear existing timeout to debounce bounds_changed events
+    const debouncedRenderHexagons = () => {
       if (debounceTimeout.value) {
         clearTimeout(debounceTimeout.value);
       }
-      // Set new timeout for debounced rendering
       debounceTimeout.value = setTimeout(() => {
         renderHexagons();
-        debounceTimeout.value = null;
-      }, 300);
-    });
+      }, 500);
+    };
+
+    debouncedRenderHexagons();
 
     // Cleanup function
     return () => {
@@ -141,11 +146,8 @@ export default function MapOverlay({map, mapsLibrary}: MapOverlayProps) {
         clearTimeout(debounceTimeout.value);
         debounceTimeout.value = null;
       }
-      google.maps.event.removeListener(zoomListener);
-      google.maps.event.removeListener(boundsListener);
-      clearHexagons();
     };
-  }, [map]);
+  }, [map, currentZoomLevel, currentCenter]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -153,7 +155,7 @@ export default function MapOverlay({map, mapsLibrary}: MapOverlayProps) {
       if (debounceTimeout.value) {
         clearTimeout(debounceTimeout.value);
       }
-      clearHexagons();
+      clearHexagons()();
     };
   }, []);
 

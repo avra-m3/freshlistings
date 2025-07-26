@@ -1,5 +1,5 @@
 import {Handlers, PageProps} from "$fresh/server.ts";
-import {getListingById} from "../../lib/opensearch.ts";
+import {getListingById} from "../../lib/opensearch/listings.ts";
 import {Listing} from "../../lib/types.ts";
 import IconBathFilled from "https://deno.land/x/tabler_icons_tsx@0.0.7/tsx/bath-filled.tsx";
 import IconBed from "https://deno.land/x/tabler_icons_tsx@0.0.7/tsx/bed.tsx";
