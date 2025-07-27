@@ -1,17 +1,9 @@
-import { Client } from "npm:@opensearch-project/opensearch";
 import { InferredFilters, Listing, ListingHighlight } from "../types.ts";
+import {EMBEDDING_MODEL_ID, getOpenSearchClient} from "./common.ts";
 
-const OPENSEARCH_URL = Deno.env.get("OPENSEARCH_URL");
-export const EMBEDDING_MODEL_ID = Deno.env.get("OPENSEARCH_MODEL_ID");
-// const HIGHLIGHT_MODEL_ID = Deno.env.get("OPENSEARCH_HL_MODEL_ID");
-
-console.log("OPENSEARCH_URL", OPENSEARCH_URL);
-
-export const client = new Client({
-  node: OPENSEARCH_URL
-});
 
 export const getListingById = async (id: string) => {
+  const client = getOpenSearchClient();
   const response = await client.get<{ _source: Listing }>({
     index: "listings",
     id,
@@ -43,6 +35,7 @@ export const searchListings = async (
   coords?: { lat: number; lng: number },
   page = 0,
 ) => {
+  const client = getOpenSearchClient();
   const filters = [];
   if (understoodQuery.numBeds?.max || understoodQuery.numBeds?.min) {
     filters.push({

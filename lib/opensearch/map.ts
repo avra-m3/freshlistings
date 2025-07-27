@@ -1,4 +1,5 @@
-import {client} from "./listings.ts";
+import {getOpenSearchClient} from "./common.ts";
+
 
 export type MapTileData = {
   index: string;
@@ -15,6 +16,7 @@ type MapTileInput = {
 export const getMapTileData = async (
   { keyword, zoom, topLeft, bottomRight }: MapTileInput,
 ): Promise<MapTileData[]> => {
+  const client = getOpenSearchClient();
   // convert to cells at zoom 9
   // find cells in opensearch within bounds and semantically matching keyword and aggregate using geohex_grid
   const response = await client.search<{

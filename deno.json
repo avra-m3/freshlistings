@@ -10,17 +10,8 @@
     "update": "deno run -A -r https://fresh.deno.dev/update .",
     "import": "deno run --env-file --allow-ffi --allow-read=data --allow-read=node_modules --allow-env --allow-sys --allow-net infra/scripts/upload_data.ts"
   },
-  "lint": {
-    "rules": {
-      "tags": [
-        "fresh",
-        "recommended"
-      ]
-    }
-  },
-  "exclude": [
-    "**/_fresh/*"
-  ],
+  "lint": { "rules": { "tags": ["fresh", "recommended"] } },
+  "exclude": ["**/_fresh/*"],
   "imports": {
     "$fresh/": "https://deno.land/x/fresh@1.7.3/",
     "$std/": "https://deno.land/std@0.216.0/",
@@ -43,9 +34,6 @@
     "@opensearch-project/opensearch": "npm:@opensearch-project/opensearch@2.5.0",
     "zod": "npm:zod@^4.0.5"
   },
-  "compilerOptions": {
-    "jsx": "react-jsx",
-    "jsxImportSource": "preact"
-  },
+  "compilerOptions": { "jsx": "react-jsx", "jsxImportSource": "preact" },
   "nodeModulesDir": "auto"
 }
