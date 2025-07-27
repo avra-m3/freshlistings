@@ -4,6 +4,7 @@ import {InferredFilters} from "../lib/types.ts";
 import {FilterPanel} from "../components/FilterPanel.tsx";
 import IconSparkles from "https://deno.land/x/tabler_icons_tsx@0.0.7/tsx/sparkles.tsx";
 import IconRadar from "https://deno.land/x/tabler_icons_tsx@0.0.7/tsx/radar.tsx";
+import {SearchInput} from "../lib/search.ts";
 
 interface ListingSearchProps {
   queryTime: number;
@@ -11,8 +12,7 @@ interface ListingSearchProps {
   page?: number;
   model?: string;
   count?: number;
-  understoodQuery?: InferredFilters;
-  realLocation?: string;
+  understoodQuery?: SearchInput;
 }
 
 
@@ -94,7 +94,7 @@ export default function SearchPanel(props: ListingSearchProps) {
       <div class="bg-white px-4 pb-4">
         {predictedFilters.value && Object.entries(predictedFilters.value).length > 0 && (
           <div class={(isLoading.value && query.value.trim()) ? "flex items-center gap-2 mt-2 animate-pulse" : "mt-2"}>
-            <FilterPanel filters={predictedFilters.value} realLocation={props.realLocation} />
+            <FilterPanel filters={predictedFilters.value} />
           </div>
         )}
 
@@ -105,10 +105,10 @@ export default function SearchPanel(props: ListingSearchProps) {
               {" "}
             </div>
           )}
-          {props.realLocation
+          {props.understoodQuery?.fullAddress
             ? (
               <div class="ml-auto mt-2 text-gray-600 inline">
-                <IconRadar class="inline mr-1" /> Around "{props.realLocation}"
+                <IconRadar class="inline mr-1" /> Around "{props.understoodQuery?.fullAddress}"
               </div>
             )
             : ""}

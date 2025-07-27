@@ -1,30 +1,23 @@
-import { useSignal } from "@preact/signals";
-import { useEffect, useMemo } from "preact/hooks";
-import { InferredFilters } from "../lib/types.ts";
-import { FilterPanel } from "../components/FilterPanel.tsx";
+import {useSignal} from "@preact/signals";
+import {useEffect, useMemo} from "preact/hooks";
+import {InferredFilters} from "../lib/types.ts";
+import {FilterPanel} from "../components/FilterPanel.tsx";
 import IconSparkles from "https://deno.land/x/tabler_icons_tsx@0.0.7/tsx/sparkles.tsx";
-import IconRadar from "https://deno.land/x/tabler_icons_tsx@0.0.7/tsx/radar.tsx";
-import {
-  mapSearchQuerySignal,
-  useMapCenter,
-  useMapIntentionSignal,
-  useMapSearchKeywordSignal,
-  useZoomLevel,
-} from "../routes/map/signals.ts";
+import {mapSearchQuerySignal, useMapCenter, useZoomLevel,} from "../routes/map/signals.ts";
+import {SearchInput} from "../lib/search.ts";
 
 interface ListingSearchProps {
   query?: string;
-  page?: number;
-  understoodQuery?: InferredFilters;
-  realLocation?: string;
+  understoodQuery?: SearchInput;
 }
 
 export default function MapSearchPanel(props: ListingSearchProps) {
   const query = useSignal(props.query || "");
   const mapZoom = useZoomLevel();
   const mapCenter = useMapCenter();
-  const predictedFilters = useMapIntentionSignal();
+  const predictedFilters = useSignal<SearchInput | undefined>(props.understoodQuery)
   const isLoading = useSignal(false);
+
   const predictionCache = useMemo(() => {
     const cache: Record<string, InferredFilters> = {};
     if (props.understoodQuery) {
@@ -34,13 +27,13 @@ export default function MapSearchPanel(props: ListingSearchProps) {
   }, []);
 
   useEffect(() => {
-    console.log("SearchPanel: query changed", query.value);
     if (!query.value.trim()) {
       mapSearchQuerySignal.value = null;
       return;
     }
 
     if (predictionCache[query.value.trim()]) {
+      predictedFilters.value = predictionCache[query.value.trim()];
       mapSearchQuerySignal.value = predictionCache[query.value.trim()];
       return;
     }
@@ -49,15 +42,14 @@ export default function MapSearchPanel(props: ListingSearchProps) {
     const timeoutId = setTimeout(async () => {
       try {
         const params = new URLSearchParams(window.location.search);
-        console.log("params", params);
         params.append("query", query.value);
 
         const response = await fetch(`/api/predict?${params}`);
         if (response.ok) {
           const data = await response.json();
           if (data.understoodQuery) {
-            delete data.understoodQuery.intention;
             predictionCache[query.value.trim()] = data.understoodQuery;
+            predictedFilters.value = data.understoodQuery;
             mapSearchQuerySignal.value = data.understoodQuery;
           }
         }
@@ -71,8 +63,15 @@ export default function MapSearchPanel(props: ListingSearchProps) {
     return () => clearTimeout(timeoutId);
   }, [query.value]);
 
+  const handleInput = (e: Event) => {
+    const textarea = e.target as HTMLTextAreaElement;
+    textarea.style.height = "auto";
+    textarea.style.height = `calc(${textarea.scrollHeight}px - 2rem)`;
+    query.value = textarea.value;
+  };
+
   return (
-    <div class="absolute top-5 left-2 z-10 rounded-xl shadow-lg bg-none">
+    <div class="absolute top-5 left-2 z-10 rounded-xl shadow-lg bg-none bg-white opacity-80 backdrop-blur-md rounded-b-xl w-full max-w-2xl">
       <form class="flex gap-0">
         {mapCenter && (
           <>
@@ -95,12 +94,13 @@ export default function MapSearchPanel(props: ListingSearchProps) {
             value={mapZoom.toString()}
           />
         )}
-        <input
-          type="text"
+        <textarea
           name="q"
-          class="flex-grow p-4 text-lg rounded-tl-xl outline-none"
+          class="flex-grow p-4 text-lg rounded-tl-xl outline-none resize-none overflow-hidden"
           placeholder="Search for listings..."
           value={query.value}
+          onInput={handleInput}
+          rows={1}
         />
         <button
           type="submit"
@@ -110,17 +110,16 @@ export default function MapSearchPanel(props: ListingSearchProps) {
           Search
         </button>
       </form>
-      <div class="px-4 pb-4">
-        {predictedFilters &&
-          Object.entries(predictedFilters).length > 0 && (
+      <div class="px-4 pb-4 -mt-2">
+        {predictedFilters.value &&
+          Object.entries(predictedFilters.value).length > 0 && (
           <div
             class={(isLoading.value && query.value.trim())
               ? "flex items-center gap-2 mt-2 animate-pulse"
               : "mt-2"}
           >
             <FilterPanel
-              filters={predictedFilters}
-              realLocation={props.realLocation}
+              filters={{...predictedFilters.value, intention: undefined}}
             />
           </div>
         )}

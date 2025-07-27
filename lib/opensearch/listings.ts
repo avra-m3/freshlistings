@@ -82,15 +82,6 @@ export const searchListings = async (
         distance.unit = understoodQuery.location.distance.unit;
       }
     }
-    console.log({
-      geo_distance: {
-        distance: `${distance.value}${distance.unit}`,
-        location: {
-          lat: coords.lat,
-          lon: coords.lng,
-        },
-      },
-    });
     // const projection = proj4(,'WGS84');
     filters.push({
       geo_distance: {

@@ -94,10 +94,11 @@ export const handler: Handlers = {
       JSON.stringify({
         tiles: pointsWithData.map(({ index, count }) => ({
           h3Index: index,
-          fillColour: "#4285F4",
+          fillColour: "rgba(90,40,241,0.71)",
           fillOpacity: (count / maxCount) * 0.5 + 0.2, // Scale opacity between 0.2 and 0.7
-          strokeColor: "#4285F4",
+          strokeColor: "rgba(90,40,241,0.71)",
           data: `${count} total listings`,
+          number: count,
         })),
       }),
       {
@@ -114,4 +115,5 @@ export type MapTile = {
   fillOpacity: number;
   strokeColor: string;
   data: string; // Placeholder for backend-driven data
+  number: number;
 };

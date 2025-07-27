@@ -1,6 +1,7 @@
 import {InferredFilters, Listing, ListingHighlight} from "../lib/types.ts";
 import ListingSearchResults from "../islands/ListingSearchResults.tsx";
 import SearchPanel from "../islands/SearchPanel.tsx";
+import {SearchInput} from "../lib/search.ts";
 
 interface ListingSearchProps {
   listings: (Listing & ListingHighlight)[];
@@ -9,8 +10,7 @@ interface ListingSearchProps {
   page?: number;
   model?: string;
   count?: number;
-  understoodQuery?: InferredFilters;
-  realLocation?: string;
+  understoodQuery?: SearchInput;
 }
 
 export default function ListingSearch(props: ListingSearchProps) {

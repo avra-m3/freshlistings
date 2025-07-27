@@ -1,11 +1,10 @@
 import {Handlers, PageProps} from "$fresh/server.ts";
 import ListingSearch from "../components/ListingSearch.tsx";
 import {searchListings} from "../lib/opensearch/listings.ts";
-import {InferredFilters, Listing, ListingHighlight} from "../lib/types.ts";
-import {breakdownQuery} from "../lib/queryUnderstanding.ts";
-import {locationToCoordinates} from "../lib/geocode.ts";
+import {Listing, ListingHighlight} from "../lib/types.ts";
 import {z} from "npm:zod@4.0.5";
 import {AllowedModelSchema} from "../lib/models.ts";
+import {search, SearchInput} from "../lib/search.ts";
 
 type Data = {
   listings: (Listing & ListingHighlight)[];
@@ -14,9 +13,7 @@ type Data = {
   page?: number;
   model?: string;
   count?: number;
-  understoodQuery?: InferredFilters;
-  realLocation?: string;
-
+  understoodQuery?: SearchInput;
 };
 
 const params = z.object({
@@ -41,7 +38,7 @@ export const handler: Handlers<Data> = {
     const p = parsedParams.data.p;
     const m = parsedParams.data.m;
     if (q) {
-      const understoodQuery = await breakdownQuery(q, m);
+      const understoodQuery = await search(q, m);
       if(!understoodQuery) {
         return ctx.render({
           listings: [],
@@ -49,18 +46,9 @@ export const handler: Handlers<Data> = {
           query: q,
         });
       }
-      console.log("query", understoodQuery);
-      let realCoords: { lat: number; lng: number; name: string } | undefined;
-      if (understoodQuery.location?.place) {
-        realCoords = await locationToCoordinates(
-          understoodQuery.location.place,
-        );
-      }
-      console.log("realcrs", realCoords);
-
       const { data, queryTime, count } = await searchListings(
         understoodQuery,
-        realCoords,
+        understoodQuery.point,
         p,
       );
       return ctx.render({
@@ -70,7 +58,6 @@ export const handler: Handlers<Data> = {
         page: p,
         count,
         understoodQuery,
-        realLocation: realCoords?.name,
         model: m,
       });
     }
@@ -79,7 +66,6 @@ export const handler: Handlers<Data> = {
 };
 
 export default function Home({ data }: PageProps<Data>) {
-  // console.log(data.listings);
   return (
     <div className="mx-auto">
       <div className="bg-[#a104c3] w-full flex flex-col items-center justify-center p-6 pb-60 -mb-60">
@@ -104,7 +90,6 @@ export default function Home({ data }: PageProps<Data>) {
             query={data.query}
             page={data.page}
             understoodQuery={data.understoodQuery}
-            realLocation={data.realLocation}
             model={data.model}
           />
         </div>

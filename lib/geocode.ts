@@ -4,7 +4,6 @@ export const locationToCoordinates = async (
   location: string,
 ): Promise<{ lat: number; lng: number; name: string } | undefined> => {
   const res = await requestAddressToCoordinates(location);
-  console.log(res);
   if (!res || res.length === 0) {
     return;
   }

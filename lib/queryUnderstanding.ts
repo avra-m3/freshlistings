@@ -8,10 +8,6 @@ export const breakdownQuery = async (
 ): Promise<InferredFilters | null> => {
   const structuredLLM = getStructuredModel(model, QueryOutput);
   const r = await structuredLLM.invoke([
-    // {
-    //   role: "system",
-    //   content: metaPrompt,
-    // },
     {
       role: "human",
       content: query,

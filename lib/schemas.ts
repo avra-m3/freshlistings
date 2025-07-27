@@ -65,7 +65,7 @@ export const QueryOutput = z.object({
     .enum(["buy", "rent", "invest", "first home", "vacation", "other"])
     .describe(
       "The intention of the user when searching for listings, such as buying, renting, investing, etc.",
-    ),
+    ).optional(),
   numBeds: MinMaxField.optional().describe(
     "The number of beds or bedrooms.",
   ),

@@ -1,5 +1,5 @@
 /// <reference types="@types/google.maps" />
-import { useEffect } from "preact/hooks";
+import { useEffect, useMemo } from "preact/hooks";
 import { useSignal, useSignalEffect } from "@preact/signals";
 import { cellToBoundary, cellToLatLng } from "h3-js";
 import { IS_BROWSER } from "$fresh/runtime.ts";
@@ -9,14 +9,14 @@ import {
   useMapCenter,
   useMapLibrary,
   useMapSearchKeywordSignal,
-  useZoomLevel
+  useZoomLevel,
 } from "../routes/map/signals.ts";
 
 export default function MapOverlay() {
   const mapLibrary = useMapLibrary();
   const map = useGoogleMap();
 
-  const hexagons = useSignal<google.maps.Polygon[]>([]);
+  const cleanupItems = useSignal<(google.maps.Polygon | google.maps.OverlayView)[]>([]);
 
   const currentZoomLevel = useZoomLevel();
   const currentCenter = useMapCenter();
@@ -25,9 +25,11 @@ export default function MapOverlay() {
   const debounceTimeout = useSignal<number | null>(null);
   const currentWindow = useSignal<google.maps.InfoWindow | null>(null);
 
+  const MapTextOverlay = useMapTextOverlay();
+
   const clearHexagons = () => {
-    const hexagonsBefore = [...hexagons.value];
-    hexagons.value = [];
+    const hexagonsBefore = [...cleanupItems.value];
+    cleanupItems.value = [];
     return () => {
       hexagonsBefore.forEach((polygon) => {
         polygon.setMap(null);
@@ -36,12 +38,13 @@ export default function MapOverlay() {
   };
 
   const drawTiles = (tiles: MapTile[]) => {
-    if (!mapLibrary || !IS_BROWSER) {
+    if (!mapLibrary || !map || !IS_BROWSER || !MapTextOverlay) {
       return;
     }
-    const newHexagons: google.maps.Polygon[] = [];
+    const newHexagons: (google.maps.Polygon | google.maps.OverlayView)[] = [];
     tiles.forEach((tile) => {
       try {
+        const center = cellToLatLng(tile.h3Index);
         const boundary = cellToBoundary(tile.h3Index, true);
         const paths = boundary.map(([lng, lat]) => ({ lat, lng }));
 
@@ -57,14 +60,14 @@ export default function MapOverlay() {
           clickable: true,
         });
 
+
         // Add click handler to show H3 index
         polygon.addListener("click", () => {
           if (currentWindow.value) {
             currentWindow.value.close();
           }
-          const center = cellToLatLng(tile.h3Index);
           currentWindow.value = new mapLibrary.InfoWindow({
-            content: `<div>
+            content: `<div id="content" class="bg-white p-2 rounded shadow-lg">
                             <strong>H3 Index:</strong> ${tile.h3Index}<br>
                             <strong>Data:</strong> ${tile.data}
                         </div>`,
@@ -73,12 +76,35 @@ export default function MapOverlay() {
           currentWindow.value.open(map);
         });
 
+        if(tile.fillOpacity > 0.4) {
+          const textOverlay = new MapTextOverlay(
+              `${tile.number}`,
+              {lat: center[0], lng: center[1]},
+              map,
+          );
+          newHexagons.push(textOverlay);
+        }
+
+        polygon.addListener("mouseover", () => {
+          polygon.setOptions({
+            strokeColor: "#825ced", // Highlight color on hover
+            strokeWeight: 2,
+          });
+        });
+
+        polygon.addListener("mouseout", () => {
+          polygon.setOptions({
+            strokeColor: tile.fillColour, // Reset to original color
+            strokeWeight: 0,
+          });
+        });
+
         newHexagons.push(polygon);
       } catch (error) {
         console.warn("Error creating hexagon for tile:", tile, error);
       }
     });
-    hexagons.value = newHexagons;
+    cleanupItems.value = newHexagons;
   };
 
   // Generate and render H3 hexagons for the current map viewport
@@ -102,7 +128,7 @@ export default function MapOverlay() {
       topLeft: `${topLeft.lat()},${topLeft.lng()}`,
       bottomRight: `${bottomRight.lat()},${bottomRight.lng()}`,
       zoom: zoom.toString(),
-      keywords: keyword
+      keywords: keyword,
     });
 
     const url = `/map/cells?${params.toString()}`;
@@ -127,7 +153,10 @@ export default function MapOverlay() {
 
   // Set up map event listeners
   useEffect(() => {
-    if (!map || typeof window === "undefined" || !currentZoomLevel || !currentCenter) return;
+    if (
+      !map || typeof window === "undefined" || !currentZoomLevel ||
+      !currentCenter
+    ) return;
 
     const debouncedRenderHexagons = () => {
       if (debounceTimeout.value) {
@@ -151,13 +180,88 @@ export default function MapOverlay() {
 
   // Cleanup on unmount
   useEffect(() => {
+    if (map) {
+      map?.addListener("click", () => {
+        if (currentWindow.value) {
+          currentWindow.value.close();
+        }
+      });
+    }
+
     return () => {
       if (debounceTimeout.value) {
         clearTimeout(debounceTimeout.value);
       }
       clearHexagons()();
     };
-  }, []);
+  }, [map]);
 
   return null; // This component doesn't render any JSX, it only manages map overlays
 }
+
+const useMapTextOverlay = () => {
+  const mapLibrary = useMapLibrary();
+
+  return useMemo(() => {
+    if(!mapLibrary) return null;
+
+    class MapTextOverlay extends mapLibrary.OverlayView {
+      private text: string;
+      private position: google.maps.LatLngLiteral;
+      private map: google.maps.Map;
+      private div: HTMLDivElement | null = null;
+
+      constructor(
+          text: string,
+          position: google.maps.LatLngLiteral,
+          map: google.maps.Map,
+      ) {
+        super();
+        this.text = text;
+        this.position = position;
+        this.map = map;
+        this.setMap(map);
+      }
+
+      override onAdd() {
+        const div = document.createElement("div");
+        div.className = `absolute -translate-x-1/2 font-bold 
+      shadow-lg text-xl bg-white rounded-lg p-1 opacity-60 text-purple-700`;
+        div.textContent = this.text;
+
+        const overlayLayer = this.getPanes()?.overlayLayer;
+        if (overlayLayer) {
+          overlayLayer.appendChild(div);
+          this.div = div;
+        }
+      }
+
+      override draw() {
+        if (!this.div) return;
+
+        const projection = this.getProjection();
+        if (!projection) return;
+
+        const point = projection.fromLatLngToDivPixel(
+            new google.maps.LatLng(this.position.lat, this.position.lng),
+        );
+
+        if (!point) return;
+
+        this.div.style.left = `${point.x}px`;
+        this.div.style.top = `${point.y}px`;
+      }
+
+      override onRemove() {
+        if (this.div && this.div.parentNode) {
+          this.div.parentNode.removeChild(this.div);
+          this.div = null;
+        }
+      }
+    }
+    return MapTextOverlay;
+  }, [mapLibrary])
+
+
+
+};

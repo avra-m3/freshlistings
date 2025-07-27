@@ -21,8 +21,6 @@ export const alternateBreakdownQuery = async (
     },
   ]);
 
-  console.log("raw", raw.content)
-  console.log("classifications", parsed.keyTerms);
   const distanceTerm = parsed.keyTerms.find((v) => v.type === "location");
 
   const results: InferredFilters = {
@@ -49,15 +47,12 @@ export const alternateBreakdownQuery = async (
         const prompt: string | undefined = terms.length ?
           terms.flatMap(term =>[term.descriptor, term.term])
               .filter(v => !!v).join(" ") : undefined;
-        console.log(type, prompt)
         if (key && prompt) {
           results[key as 'numBeds' | 'numBathrooms' | 'price'] = (await minMaxField.invoke(`${type} range request: ${prompt}`)).parsed;
         }
       },
     ),
   );
-
-  console.log("results", results)
 
   return results;
 };

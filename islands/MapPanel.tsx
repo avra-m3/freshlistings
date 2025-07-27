@@ -6,12 +6,18 @@ import MapOverlay from "./MapOverlay.tsx";
 import {
   googleLibrarySignal,
   setGoogleMap,
+  useGoogleMap,
   useMapLibrary,
 } from "../routes/map/signals.ts";
+import { Easing, Tween, update } from "npm:@tweenjs/tween.js@25.0.0";
 
 interface MapPanelProps {
   apiKey?: string;
   position?: {
+    lat: number;
+    lng: number;
+  };
+  searchResultPosition?: {
     lat: number;
     lng: number;
   };
@@ -49,6 +55,7 @@ export default function MapPanel(props: MapPanelProps) {
   const mapRef = createRef<HTMLDivElement>();
 
   const mapLibrary = useMapLibrary();
+  const map = useGoogleMap();
 
   useEffect(() => {
     if (!IS_BROWSER) {
@@ -101,6 +108,47 @@ export default function MapPanel(props: MapPanelProps) {
     map.addListener("dragend", updateUrl);
     map.addListener("zoom_changed", updateUrl);
   }, [mapLibrary]);
+
+  useLayoutEffect(() => {
+    if (map) {
+      setTimeout(() => {
+        if (props.searchResultPosition) {
+          console.log("setup animation for camera movement");
+          let cameraOptions: google.maps.CameraOptions = {
+            tilt: 0,
+            heading: 0,
+            zoom: props.zoom || 10,
+            center: props.position || { lat: 37.7749, lng: -122.4194 },
+          };
+          const tween = new Tween(cameraOptions)
+            .to(
+              {
+                tilt: 65,
+                heading: 90,
+                zoom: 16,
+                center: props.searchResultPosition,
+              },
+              5000,
+            )
+            .easing(Easing.Quadratic.Out)
+            .onUpdate((newCamera) => {
+              console.log("Easing");
+              map.moveCamera(newCamera);
+            }).start()
+            .onComplete(() => {
+            });
+
+          const animate: FrameRequestCallback = (time) => {
+            tween.update(time);
+            if(tween.isPlaying()){
+              requestAnimationFrame(animate);
+            }
+          };
+          requestAnimationFrame(animate);
+        }
+      }, 1000);
+    }
+  }, [map]);
 
   return (
     <div class="w-screen h-screen relative">

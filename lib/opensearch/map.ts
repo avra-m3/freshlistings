@@ -67,7 +67,6 @@ export const getMapTileData = async (
     },
   });
 
-  console.log(response.body.aggregations);
   return response.body.aggregations.grouped.buckets.map((bucket) => {
     const cell = bucket.key;
     return {

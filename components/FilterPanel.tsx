@@ -8,23 +8,25 @@ import IconSparkles from "https://deno.land/x/tabler_icons_tsx@0.0.7/tsx/sparkle
 import IconTarget from "https://deno.land/x/tabler_icons_tsx@0.0.7/tsx/target.tsx";
 import IconCurrencyDollar from "https://deno.land/x/tabler_icons_tsx@0.0.7/tsx/currency-dollar.tsx";
 import { Tooltip } from "./Tooltip.tsx";
+import {SearchInput} from "../lib/search.ts";
 
 interface FilterPanelProps {
-  filters: InferredFilters;
-  realLocation?: string;
+  filters: SearchInput;
 }
 
-export const FilterPanel = ({ filters, realLocation }: FilterPanelProps) => {
+
+export const FilterPanel = ({ filters }: FilterPanelProps) => {
+  const {fullAddress, point: _, ...inferredFilters} = filters;
   return (
     <div className="flex flex-wrap gap-2">
       <div className="mt-4 flex flex-wrap gap-2">
-        {Object.entries(filters).map(([key, value]) => (
+        {Object.entries(inferredFilters).map(([key, value]) => (
           <Filter
             key={key}
             label={key as keyof InferredFilters}
             value={value}
-            tooltip={(key === "location" && realLocation)
-              ? realLocation
+            tooltip={(key === "location" && fullAddress)
+              ? fullAddress
               : undefined}
           />
         ))}

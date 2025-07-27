@@ -145,7 +145,7 @@ services:
       - opensearch-node1
       - redis
     environment:
-      OPENSEARCH_URL: "http://opensearch:9200"
+      OPENSEARCH_URL: "http://opensearch-node1:9200"
       OLLAMA_URL: "http://ollama:11434"
       REDIS_URL: "redis://redis:6379"
     env_file:
