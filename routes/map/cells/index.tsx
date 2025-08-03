@@ -1,7 +1,6 @@
-import { Handlers, RouteConfig } from "$fresh/server.ts";
-import { z } from "npm:zod@4.0.5";
-import { getHexagonEdgeLengthAvg, UNITS } from "h3-js";
-import { getMapTileData } from "../../../lib/opensearch/map.ts";
+import {Handlers, RouteConfig} from "$fresh/server.ts";
+import {z} from "npm:zod@4.0.5";
+import {getMapTileData} from "../../../lib/opensearch/map.ts";
 
 const LocationSchema = z.string().transform(
   (v) => v.split(","),
@@ -67,12 +66,6 @@ export const handler: Handlers = {
     }
     const { topLeft, bottomRight, zoom, keywords } = parsedParams.data;
     const h3Resolution = getH3Resolution(zoom);
-
-    const sizeAsRads = getHexagonEdgeLengthAvg(h3Resolution, UNITS.km) / 6371;
-    const sizeAsDeg = sizeAsRads * (180 / Math.PI);
-    const margin = sizeAsDeg * 2;
-    console.log(keywords)
-
     const pointsWithData = await getMapTileData({
       keyword: keywords,
       topLeft: [

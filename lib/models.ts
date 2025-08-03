@@ -14,7 +14,12 @@ You must always return valid JSON fenced by a markdown code block. Do not return
 
 const models = {
   "gemini-2.5-flash": new ChatGoogleGenerativeAI({
-    model: "gemini-2.5-flash-lite-preview-06-17",
+    model: "gemini-2.5-flash",
+    temperature: 0,
+    cache,
+  }),
+  "gemini-2.5-flash-lite": new ChatGoogleGenerativeAI({
+    model: "gemini-2.5-flash-lite",
     temperature: 0,
     cache,
   }),

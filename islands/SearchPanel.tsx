@@ -78,7 +78,7 @@ export default function SearchPanel(props: ListingSearchProps) {
           class="flex-grow p-4 text-lg rounded-tl-xl outline-none"
           placeholder="Search for listings..."
           value={query.value}
-          // onChange={(e) => query.value = (e.currentTarget as HTMLInputElement).value}
+          onChange={(e) => query.value = (e.currentTarget as HTMLInputElement).value}
         />
         {props.model && props.model !== "gemini-2.5-flash" && (
           <input type="hidden" name="m" value={props.model} />

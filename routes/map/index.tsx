@@ -3,6 +3,7 @@ import MapPanel from "../../islands/MapPanel.tsx";
 import MapSearchPanel from "../../islands/MapSearchPanel.tsx";
 import { z } from "npm:zod@4.0.5";
 import { search, SearchInput } from "../../lib/search.ts";
+import MapOverlay from "../../islands/MapOverlay.tsx";
 const GOOGLE_MAPS_API_KEY = Deno.env.get("GOOGLE_MAPS_API_KEY");
 
 interface HandlerData {
@@ -69,6 +70,7 @@ export default function ListingPage(
         searchResultPosition={data.understoodQuery?.point}
         zoom={data.zoom}
       />
+      <MapOverlay />
       <MapSearchPanel
         query={data.query}
         understoodQuery={data.understoodQuery}

@@ -1,15 +1,9 @@
 /// <reference types="@types/google.maps" />
-import { Head, IS_BROWSER } from "$fresh/runtime.ts";
-import { useEffect, useLayoutEffect } from "preact/hooks";
-import { createRef } from "preact";
-import MapOverlay from "./MapOverlay.tsx";
-import {
-  googleLibrarySignal,
-  setGoogleMap,
-  useGoogleMap,
-  useMapLibrary,
-} from "../routes/map/signals.ts";
-import { Easing, Tween, update } from "npm:@tweenjs/tween.js@25.0.0";
+import {Head, IS_BROWSER} from "$fresh/runtime.ts";
+import {useEffect, useLayoutEffect} from "preact/hooks";
+import {createRef} from "preact";
+import {googleLibrarySignal, setGoogleMap, useGoogleMap, useMapLibrary,} from "../routes/map/signals.ts";
+import {Easing, Tween} from "npm:@tweenjs/tween.js@25.0.0";
 
 interface MapPanelProps {
   apiKey?: string;
@@ -164,7 +158,6 @@ export default function MapPanel(props: MapPanelProps) {
           }}
         />
       </Head>
-      <MapOverlay />
       <div id="map" class="w-full h-full" ref={mapRef} />
     </div>
   );

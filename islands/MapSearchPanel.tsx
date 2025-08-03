@@ -42,7 +42,7 @@ export default function MapSearchPanel(props: ListingSearchProps) {
     const timeoutId = setTimeout(async () => {
       try {
         const params = new URLSearchParams(window.location.search);
-        params.append("query", query.value);
+        params.append("q", query.value);
 
         const response = await fetch(`/api/predict?${params}`);
         if (response.ok) {

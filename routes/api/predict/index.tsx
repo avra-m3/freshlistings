@@ -22,7 +22,7 @@ export const config: RouteConfig = {
 };
 
 export const handler: Handlers<Data> = {
-    async GET(req, ctx) {
+    async GET(req) {
         const url = new URL(req.url);
         const rawParams = Object.fromEntries(url.searchParams.entries());
         const parsedParams = params.safeParse(rawParams);
@@ -61,7 +61,7 @@ export const handler: Handlers<Data> = {
                 headers: { "Content-Type": "application/json" },
             });
         }
-        return ctx.render({ feedback: "No query provided", query: q, model: m });
+        return new Response(JSON.stringify({ feedback: "No query provided", query: q, model: m }));
     },
 };
 
